@@ -5,6 +5,8 @@
 
 2. Настроить "подружить" 
 - Teraform с Яндекс.Клауд
+![Скриншот-1](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img000.png)
+
 - Snapshot (снимки ВМ)
 - ALB - автобалансировщик сети
 
