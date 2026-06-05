@@ -1,0 +1,10 @@
+# Настройка доступа к ВМ по SSH
+# Этим файлом создаём пользователя в ВМашинах с логином kupriyanov и включаем в группу sudo, с оболочкой bash без пароля. Доступ по ssh с ключем ssh-ed25519
+users:
+  - name: kupriyanov # имя пользователя
+    groups: sudo # группа куда он будет добавлен
+    shell: /bin/bash # оболочка командной строки, которая запустится при входе пользователя
+    sudo: ["ALL=(ALL) NOPASSWD:ALL"] # разрешает запускать sudo от имени любого пользователя, любой группы и без запроса пароля
+    ssh_authorized_keys: #поле для типа авторизации
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGS8nVF3ee5UJiBR/r4CAo7uUY71TZXJQbTpBhhdql1h kupriyanov@diploma #тип ключа, сам ключ и простой комментарий
+
