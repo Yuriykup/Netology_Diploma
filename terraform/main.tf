@@ -171,3 +171,51 @@ resource "yandex_compute_instance" "web-b" {
   }
 }
 
+ Блок для создания серверв Elasticsearch
+# ЖД для Elasticsearch
+resource "yandex_compute_disk" "elasticsearch-disk" {
+  name     = "elasticsearch-disk" #Имя диска
+  type     = "network-hdd" #Тип ЖД (бюджетный вариант)
+  zone     = "ru-central1-a" #Зона доступности
+  size     = "10" #Объем ЖД
+  image_id = data.yandex_compute_image.ubuntu_2204_lts.image_id #ОС Ubuntu 22.04 LTS, взятая из стандартного образа Yandex Cloud
+}
+
+# Создаю ВМ Elasticsearch
+resource "yandex_compute_instance" "elasticsearch" {
+  name        = "elasticsearch" #Имя ВМ в облаке Яндекс
+  hostname    = "elasticsearch" #Имя хоста для формирования FQDN
+  platform_id = "standard-v3" #Платформа (аппаратная конфигурация) с процессорами Intel Ice Lake
+  zone        = "ru-central1-a" #Важно, чтобы зона ВМ совпадала с зоной subnet и диска — иначе подключение невозможно.
+
+# Выделяемые вычислительные ресурсы для ВМ Elasticsearch
+  resources {
+    cores         = 2 #2 виртуальных процессора (vCPU)
+    memory        = 4 #4 ГБ оперативной памяти
+    core_fraction = 20 #гарантированная доля производительности vCPU - 20%(бюджетная) от мощности физического ядра
+  }
+
+# Загрузочный диск ВМ Elasticsearch
+  boot_disk {
+    auto_delete = true #автоматическое удалёние диска вместе с ВМ
+    disk_id = yandex_compute_disk.elasticsearch-disk.id #указано, какой именно диск будет использоваться как загрузочный.
+  }
+
+# Блок metadata для авторизации по SSH на ВМ Elasticsearch
+  metadata = {
+    user-data          = file("./cloud-init.yml") #В файле cloud‑init.yml указаны папраметры подключения по SSH на ВМ
+    serial-port-enable = 1 #активации последовательного порта. 1-включено
+  }
+
+# Политика планирования запуска и работы ВМ Elasticsearch
+  scheduling_policy { preemptible = false } #ВМ непрерываемая
+
+# Сетевой интерфейс ВМ Elasticsearch
+  network_interface {
+    subnet_id          = yandex_vpc_subnet.develop_a.id #Подсеть для подключена ВМ. Зона доступности zone ВМ должна совпадать с зоной subnet!
+    nat                = false #ВМ не получит публичный (внешний) IP‑адрес
+    security_group_ids = [yandex_vpc_security_group.elasticsearch-sg.id] #Разрешить (HTTP API Elasticsearch) для любых IP (порты 9200/9300), SSH (порт 22)
+  }
+}
+
+
