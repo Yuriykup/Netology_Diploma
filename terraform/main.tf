@@ -265,4 +265,49 @@ resource "yandex_compute_instance" "zabbix-server" {
 (SSH)
   }
 }
+# Блок содания ВМ Kibana Server
+# Создаю диск для ВМ Kibana Server
+resource "yandex_compute_disk" "kibana-disk" {
+  name     = "kibana-disk" #Имя диска
+  type     = "network-hdd" #Тип ЖД (бюджетный вариант)
+  zone     = "ru-central1-a" #Зона доступности
+  size     = "10" #Объем ЖД
+  image_id = data.yandex_compute_image.ubuntu_2204_lts.image_id #ОС Ubuntu 22.04 LTS, взятая из стандартного образа Yandex Cloud
+}
 
+# Создаю ВМ Kibana Server
+resource "yandex_compute_instance" "kibana-server" {
+  name        = "kibana-server" #Имя ВМ в облаке Яндекс
+  hostname    = "kibana-server" #Имя хоста для формирования FQDN
+  platform_id = "standard-v3" #Платформа (аппаратная конфигурация) с процессорами Intel Ice Lake
+  zone        = "ru-central1-a" #Важно, чтобы зона ВМ совпадала с зоной subnet и диска — иначе подключение невозможно.
+
+# Выделяемые вычислительные ресурсы для ВМ Kibana Server
+  resources {
+    cores         = 2 #2 виртуальных процессора (vCPU)
+    memory        = 4 #4 ГБ оперативной памяти
+    core_fraction = 20 #гарантированная доля производительности vCPU - 20%(бюджетная) от мощности физического ядра
+  }
+
+# Загрузочный диск ВМ Kibana Server
+  boot_disk {
+    auto_delete = true #автоматическое удалёние диска вместе с ВМ
+    disk_id = yandex_compute_disk.kibana-disk.id #указано, какой именно диск будет использоваться как загрузочный.
+  }
+
+# Блок metadata для авторизации по SSH на ВМ Kibana Server
+  metadata = {
+    user-data          = file("./cloud-init.yml") #В файле cloud‑init.yml указаны папраметры подключения по SSH на ВМ
+    serial-port-enable = 1 #активации последовательного порта. 1-включено
+  }
+
+# Политика планирования запуска и работы ВМ Kibana Server
+  scheduling_policy { preemptible = false } #ВМ непрерываемая
+
+# Сетевой интерфейс ВМ Kibana Server
+  network_interface {
+    subnet_id          = yandex_vpc_subnet.develop_a.id #Подсеть для подключена ВМ. Зона доступности zone ВМ должна совпадать с зоной subnet!
+    nat                = true #ВМ получит!!! публичный (внешний) IP‑адрес
+    security_group_ids = [yandex_vpc_security_group.kibana-server-sg.id] # #Разрешает порт 5601 (веб‑интерфейс Kibana), порт 80 (HTTP), порт 443 (HTTPS), порт 22 (SSH)
+  }
+}
