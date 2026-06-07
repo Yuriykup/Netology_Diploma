@@ -3,19 +3,6 @@
 #ВМ - виртуальная машина
 #FQDN - полное доменное имя хоста
 
-terraform {
-  required_providers {
-    yandex = {
-      source = "yandex-cloud/yandex"
-    }
-  }
-  required_version = ">= 0.13"
-}
-
-provider "yandex" {
-  zone = "default-ru-central1-a"
-}
-
  Данные об ОС Ubuntu 22.04
 data "yandex_compute_image" "ubuntu_2204_lts" {
   family = "ubuntu-2204-lts"
