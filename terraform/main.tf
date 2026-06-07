@@ -3,7 +3,7 @@
 #ВМ - виртуальная машина
 #FQDN - полное доменное имя хоста
 
- Данные об ОС Ubuntu 22.04
+# Данные об ОС Ubuntu 22.04
 data "yandex_compute_image" "ubuntu_2204_lts" {
   family = "ubuntu-2204-lts"
 }
@@ -58,17 +58,7 @@ resource "yandex_compute_instance" "bastion" {
 # Блок для создания WEB сервера A
 # ЖД для webA
 resource "yandex_compute_disk" "weba-disk" {
-  name     = "webA-disk" #Имя диска
-  type     = "network-hdd" #Тип ЖД (бюджетный вариант)
-  zone     = "ru-central1-a" #Зона доступности
-  size     = "10" #Объем ЖД
-  image_id = data.yandex_compute_image.ubuntu_2204_lts.image_id #ОС Ubuntu 22.04 LTS, взятая из стандартного образа Yandex Cloud
-}
-
-# Блок для создания WEB сервера A
-# ЖД для webA
-resource "yandex_compute_disk" "weba-disk" {
-  name     = "webA-disk" #Имя диска
+  name     = "weba-disk" #Имя диска
   type     = "network-hdd" #Тип ЖД (бюджетный вариант)
   zone     = "ru-central1-a" #Зона доступности
   size     = "10" #Объем ЖД
@@ -76,9 +66,9 @@ resource "yandex_compute_disk" "weba-disk" {
 }
 
 # Параметры для запуска ВМ webA
-resource "yandex_compute_instance" "web-a" {
-  name        = "web-a" #Имя ВМ в облаке Яндекс
-  hostname    = "web-a" #Имя хоста для формирования FQDN
+resource "yandex_compute_instance" "weba" {
+  name        = "weba" #Имя ВМ в облаке Яндекс
+  hostname    = "weba" #Имя хоста для формирования FQDN
   platform_id = "standard-v3" #Платформа (аппаратная конфигурация) с процессорами Intel Ice Lake
   zone        = "ru-central1-a" #важно, чтобы зона ВМ совпадала с зоной subnet и диска — иначе подключение невозможно.
 
@@ -92,7 +82,7 @@ resource "yandex_compute_instance" "web-a" {
 # Загрузочный диск ВМ webA
   boot_disk {
     auto_delete = true #автоматическое удалёние диска вместе с ВМ
-    disk_id = yandex_compute_disk.web-a-disk.id #указано, какой именно диск будет использоваться как загрузочный.
+    disk_id = yandex_compute_disk.weba-disk.id #указано, какой именно диск будет использоваться как загрузочный.
   }
 
 # Блок metadata для авторизации по SSH на ВМ webA
@@ -114,8 +104,8 @@ resource "yandex_compute_instance" "web-a" {
 
 # Блок для создания WEB сервера B
 # Создаю диск для webB
-  resource "yandex_compute_disk" "web-b-disk" {
-    name     = "webB-disk" #Имя диска
+  resource "yandex_compute_disk" "webb-disk" {
+    name     = "webb-disk" #Имя диска
     type     = "network-hdd" #Тип ЖД (бюджетный вариант)
     zone     = "ru-central1-b" #Зона доступности. Важно! ВМ будет находится в другой подсети!
     size     = "10" #Объем ЖД
@@ -123,9 +113,9 @@ resource "yandex_compute_instance" "web-a" {
 }
 
 # Создаю ВМ webB
-resource "yandex_compute_instance" "web-b" {
-  name        = "web-b" #Имя ВМ в облаке Яндекс
-  hostname    = "web-b" #Имя ВМ в облачной консоли
+resource "yandex_compute_instance" "webb" {
+  name        = "webb" #Имя ВМ в облаке Яндекс
+  hostname    = "webb" #Имя хоста для формирования FQDN
   platform_id = "standard-v3" #Платформа (аппаратная конфигурация) с процессорами Intel Ice Lake
   zone        = "ru-central1-b" #Важно, чтобы зона ВМ совпадала с зоной subnet и диска — иначе подключение невозможно.
 
@@ -138,7 +128,7 @@ resource "yandex_compute_instance" "web-b" {
 # Загрузочный диск ВМ webB
   boot_disk {
     auto_delete = true #автоматическое удалёние диска вместе с ВМ
-    disk_id = yandex_compute_disk.web-b-disk.id #указано, какой именно диск будет использоваться как загрузочный.
+    disk_id = yandex_compute_disk.webb-disk.id #указано, какой именно диск будет использоваться как загрузочный.
   }
 
 # Блок metadata для авторизации по SSH на ВМ webB
@@ -158,7 +148,7 @@ resource "yandex_compute_instance" "web-b" {
   }
 }
 
- Блок для создания серверв Elasticsearch
+# Блок для создания серверв Elasticsearch
 # ЖД для Elasticsearch
 resource "yandex_compute_disk" "elasticsearch-disk" {
   name     = "elasticsearch-disk" #Имя диска
@@ -244,14 +234,15 @@ resource "yandex_compute_instance" "zabbix-server" {
 # Политика планирования запуска и работы ВМ Zabbix Server
   scheduling_policy { preemptible = false } #ВМ непрерываемая
 
-# Сетевой интерфейс ВМ
+# Сетевой интерфейс ВМ 
   network_interface {
     subnet_id          = yandex_vpc_subnet.develop_a.id #Подсеть для подключена ВМ. Зона доступности zone ВМ должна совпадать с зоной subnet!
     nat                = true #ВМ получит!!! публичный (внешний) IP‑адрес
-    security_group_ids = [yandex_vpc_security_group.zabbix-server-sg.id] #Разрешить порт 10050 (Zabbix Agent), порт 80 (HTTP), порт 443 (HTTPS), порт 22
+    security_group_ids = [yandex_vpc_security_group.zabbix-sg.id] #Разрешить порт 10050 (Zabbix Agent), порт 80 (HTTP), порт 443 (HTTPS), порт 22
 (SSH)
   }
 }
+
 # Блок содания ВМ Kibana Server
 # Создаю диск для ВМ Kibana Server
 resource "yandex_compute_disk" "kibana-disk" {
@@ -295,6 +286,7 @@ resource "yandex_compute_instance" "kibana-server" {
   network_interface {
     subnet_id          = yandex_vpc_subnet.develop_a.id #Подсеть для подключена ВМ. Зона доступности zone ВМ должна совпадать с зоной subnet!
     nat                = true #ВМ получит!!! публичный (внешний) IP‑адрес
-    security_group_ids = [yandex_vpc_security_group.kibana-server-sg.id] # #Разрешает порт 5601 (веб‑интерфейс Kibana), порт 80 (HTTP), порт 443 (HTTPS), порт 22 (SSH)
+    security_group_ids = [yandex_vpc_security_group.kibana-sg.id] # #Разрешает порт 5601 (веб‑интерфейс Kibana), порт 80 (HTTP), порт 443 (HTTPS), порт 22 (SSH)
   }
 }
+

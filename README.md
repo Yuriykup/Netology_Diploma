@@ -8,6 +8,9 @@
 ![Скриншот-1](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img000.png)
 
 - Snapshot (снимки ВМ)
+
+`2026.06.07 Прописал файл для организации снимков ЖД ВМ`
+
 - ALB - автобалансировщик сети
 
 3. В настройках main.tf (Terraform):
