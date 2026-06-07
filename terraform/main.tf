@@ -51,7 +51,7 @@ resource "yandex_compute_instance" "bastion" {
   network_interface {
     subnet_id          = yandex_vpc_subnet.develop_a.id #Подсеть для подключена ВМ. Зона доступности zone ВМ должна совпадать с зоной subnet!
     nat                = true # Предоставляет для ВМ публичный (внешний) IP‑адрес
-    security_group_ids = [yandex_vpc_security_group.bastion.id] #Группы безопасности, применяемые к сетевому интерфейсу ВМ Бастион
+    security_group_ids = [yandex_vpc_security_group.bastion-sg.id] #Группы безопасности, применяемые к сетевому интерфейсу ВМ Бастион
   }
 }
 

@@ -1,6 +1,6 @@
 variable "flow" {
   type    = string
-  default = "vpc-network"
+  default = "vpc-net"
 }
 
 # Идентификатор облака netology-diploma
