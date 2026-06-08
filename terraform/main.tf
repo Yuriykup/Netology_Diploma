@@ -101,7 +101,6 @@ resource "yandex_compute_instance" "weba" {
     security_group_ids = [yandex_vpc_security_group.web_sg.id] #Разрешить HTTP/HTTPS (порты 80/443), SSH (порт 22)
   }
 }
-
 # Блок для создания WEB сервера B
 # Создаю диск для webB
   resource "yandex_compute_disk" "webb-disk" {
@@ -234,7 +233,7 @@ resource "yandex_compute_instance" "zabbix-server" {
 # Политика планирования запуска и работы ВМ Zabbix Server
   scheduling_policy { preemptible = false } #ВМ непрерываемая
 
-# Сетевой интерфейс ВМ 
+# Сетевой интерфейс ВМ
   network_interface {
     subnet_id          = yandex_vpc_subnet.develop_a.id #Подсеть для подключена ВМ. Зона доступности zone ВМ должна совпадать с зоной subnet!
     nat                = true #ВМ получит!!! публичный (внешний) IP‑адрес
