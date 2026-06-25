@@ -1,0 +1,28 @@
+---
+- name: install nginx
+  hosts: weba
+  become: true
+  vars_files:
+    - "./vars/main.yml"
+  
+  tasks:
+  - name: install nginx
+    apt:
+      name:
+       - nginx #веб-сервер
+       - net-tools #набор классических сетевых утилит (ifconfig, netstat, route, arp и др.)
+      state: present
+      update_cache: yes
+
+  - name: copy index.nginx-debian.html weba
+    copy:
+      src: ./weba_index/index.nginx-debian.html
+      dest: /var/www/html/index.nginx-debian.html
+      remote_src: no
+      force: yes
+      backup: yes
+
+  - name: reload nginx weba
+    service:
+      name: nginx
+      state: reloaded

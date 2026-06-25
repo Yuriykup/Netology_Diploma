@@ -1,4 +1,3 @@
-
 #Блок основных параметров сети в облаке
 
 #Основная сеть
@@ -45,8 +44,8 @@ resource "yandex_vpc_route_table" "rt" {
 
 #Настройки сети для Bastion. Подключение разрешено только по SSH, 22 порту 
 
-#создание группы безопасноти
-resource "yandex_vpc_security_group" "bastion" {
+#Создание группы безопасноти
+resource "yandex_vpc_security_group" "bastion-sg" {
   name       = "bastion-sg-${var.flow}"
   network_id = yandex_vpc_network.develop.id
 

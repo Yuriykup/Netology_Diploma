@@ -1,0 +1,71 @@
+---
+- name: Install Filebeat from Yandex Mirror
+  hosts: hosts
+  become: true
+  vars_files:
+    - "./vars/main.yml"
+  tasks:
+
+# Устанавливаем зависимости
+    - name: Install dependencies for HTTPS repositories
+      apt:
+        name:
+          - apt-transport-https #позволяет apt работать с репозиториями по HTTPS
+          - ca-certificates #содержит комплект корневых SSL-сертификатов
+          - gnupg #инструмент для работы с GPG-ключами
+        state: present
+        update_cache: yes
+
+# Добавление репозитория из зеркала Yandex mirror
+    - name: Добавление Yandex mirror в репозиторий
+      apt_repository:
+        repo: "deb [trusted=yes] {{ yandex_mirror_url }}"
+        state: present
+        filename: elasticsearch
+
+# Установка filebeat из добавленного репозитория
+    - name: Установка Filebeat
+      apt:
+        name: filebeat
+        state: present
+        update_cache: yes
+
+# Копируем настройки Filebeat
+    - name: Copy Filebeat configuration file
+      copy:
+        src: ./configs/filebeat/filebeat-config.yml
+        dest: /etc/filebeat/filebeat.yml
+
+# Активация nginx
+    - name: Включить модуль nginx в Filebeat
+      command: filebeat modules enable nginx
+      register: filebeat_module_status
+      changed_when: "'Enabled nginx' in filebeat_module_status.stdout"
+#      notify: Restart filebeat
+
+# Копирование настроек nginx на отправку логов
+    - name: Copy Nginx configuration file
+      copy:
+        src: ./configs/filebeat/nginx-config.yml
+        dest: /etc/filebeat/modules.d/nginx.yml
+
+# Рестарт сервиса и автозапуск
+    - name: Enable and restart services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - filebeat
+        - nginx
+      register: service_status
+      
+# Перезапуск службы, если она неактивна
+    - name: Restart service if inactive
+      ansible.builtin.service:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - filebeat
+        - nginx
+      when: service_status.changed

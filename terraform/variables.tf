@@ -1,6 +1,6 @@
 variable "flow" {
   type    = string
-  default = "vpc-net"
+  default = "vpc-network"
 }
 
 # Идентификатор облака netology-diploma
@@ -12,5 +12,5 @@ variable "cloud_id" {
 #Идентификатор папки default
 variable "folder_id" {
   type    = string
-  default = "1gpo0761hhdt23vcd7p""
+  default = "b1grq7bv55f51hmkt6n0"
 }

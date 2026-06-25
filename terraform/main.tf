@@ -123,6 +123,7 @@ resource "yandex_compute_instance" "webb" {
     cores         = 2 #2 виртуальных процессора (vCPU)
     memory        = 1 #1 ГБ оперативной памяти
     core_fraction = 20 #гарантированная доля производительности vCPU - 20%(бюджетная) от мощности физического ядра
+}
 
 # Загрузочный диск ВМ webB
   boot_disk {
@@ -207,7 +208,7 @@ resource "yandex_compute_disk" "zabbix-disk" {
 # Создаю ВМ Zabbix Server
 resource "yandex_compute_instance" "zabbix-server" {
   name        = "zabbix-server" #Имя ВМ в облаке Яндекс
-  hostname    = "zabbix-server" ##Имя хоста для формирования FQDN
+  hostname    = "zabbix-server" #Имя хоста для формирования FQDN
   platform_id = "standard-v3" #Платформа (аппаратная конфигурация) с процессорами Intel Ice Lake
   zone        = "ru-central1-a" #Важно, чтобы зона ВМ совпадала с зоной subnet и диска — иначе подключение невозможно.
 
@@ -237,8 +238,7 @@ resource "yandex_compute_instance" "zabbix-server" {
   network_interface {
     subnet_id          = yandex_vpc_subnet.develop_a.id #Подсеть для подключена ВМ. Зона доступности zone ВМ должна совпадать с зоной subnet!
     nat                = true #ВМ получит!!! публичный (внешний) IP‑адрес
-    security_group_ids = [yandex_vpc_security_group.zabbix-sg.id] #Разрешить порт 10050 (Zabbix Agent), порт 80 (HTTP), порт 443 (HTTPS), порт 22
-(SSH)
+    security_group_ids = [yandex_vpc_security_group.zabbix-sg.id] #Разрешить порт 10050 (Zabbix Agent), порт 80 (HTTP), порт 443 (HTTPS), порт 22(SSH)
   }
 }
 

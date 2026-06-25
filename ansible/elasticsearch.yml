@@ -1,0 +1,46 @@
+---
+- name: Install Elasticsearch from Yandex Mirror
+  hosts: elasticsearch
+  become: true
+  vars_files:
+    - "./vars/main.yml"
+  tasks:
+
+# Установка пакетов
+    - name: install packages
+      apt:
+        name:
+          - apt-transport-https #работа с репозиториями по протоколу HTTPS
+          - gnupg2 #инструмент для работы с GPG-ключами
+          - curl #утилита для передачи данных по сети (HTTP, HTTPS, FTP и др.)
+          - default-jre-headless #Java Runtime Environment (JRE) без графического интерфейса (headless)
+          - libwww-perl #библиотека Perl для работы с HTTP/HTTPS (набор модулей LWP)
+        state: present
+        update_cache: yes
+
+# Добавление репозитория из зеркала Yandex mirror
+    - name: Добавление Yandex mirror в репозиторий
+      apt_repository:
+        repo: "deb [trusted=yes] {{ yandex_mirror_url }}"
+        state: present
+        filename: elasticsearch
+
+# Установка elasticsearch из добавленного репозитория
+    - name: Установка Elasticsearch
+      apt:
+        name: elasticsearch
+        state: present
+        update_cache: yes
+
+    - name: Copy Elasticsearch config file
+      copy:
+        src: ./configs/elasticsearch/config.yml
+        dest: /etc/elasticsearch/elasticsearch.yml
+
+# Включение и запуск elasticsearch
+    - name: Включение и запуск Elasticsearch
+      systemd:
+        name: elasticsearch
+        enabled: yes
+        state: started
+        daemon_reload: yes

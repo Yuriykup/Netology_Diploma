@@ -1,0 +1,8 @@
+#Конфигурация модуля Nginx для Filebeat
+- module: nginx # Название модуля
+  access: # Секция для access-логов
+    enabled: true # Включён ли сбор
+    var.paths: ["/var/log/nginx/access.log*"] # Пути к лог-файлам
+  error: # Секция для error-логов
+    enabled: true # Включён сбор
+    var.paths: ["/var/log/nginx/error.log*"] # Пути к лог-файлам

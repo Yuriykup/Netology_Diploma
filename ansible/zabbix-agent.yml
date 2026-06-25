@@ -1,0 +1,54 @@
+---
+- name: install zabbix-agent
+  hosts: hosts
+  become: true
+  vars_files:
+    - "./vars/main.yml"
+  
+  tasks:
+
+# Скачиваем .deb пакет с официального репозитория Zabbix 
+  - name: Download Zabbix repository .deb package
+    get_url:
+      url: https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu22.04_all.deb
+      dest: /tmp/zabbix-release_latest_7.0+ubuntu22.04_all.deb
+      mode: '0644'
+
+# Установка Zabbix-agent с помощью apt
+  - name: Install Zabbix repository
+    remote_user: kupriyanov
+    apt:
+      deb: /tmp/zabbix-release_latest_7.0+ubuntu22.04_all.deb
+      update_cache: yes
+
+# Правила обновения пакетов
+  - name: Update and upgrade apt packages
+    apt:
+      upgrade: yes
+      update_cache: yes
+      state: latest
+
+# Установка zabbix-agent
+  - name: Install zabbix-agent
+    apt:
+      name: zabbix-agent
+      state: present
+      update_cache: yes
+
+# Определение адреса zabbix-сервера для zabbix-agent 
+  - name: Update Zabbix Server in config
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: 'Server='
+      line: 'Server=zabbix-server'
+      state: present
+
+# Перезагрузка и запуск службы
+  - name: Enable and restart services
+    ansible.builtin.service:
+      name: "{{ item }}"
+      enabled: true
+      state: restarted
+    loop:
+      - zabbix-agent
+      - nginx

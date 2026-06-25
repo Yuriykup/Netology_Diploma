@@ -1,0 +1,16 @@
+#Указваем где Kibana Server
+setup.kibana:
+  host: "kibana-server:5601"
+
+# Путь куда Filebeat будет отправлять логи
+output.elasticsearch:
+  hosts: ["elasticsearch-server:9200"]
+
+# Автоматическая загрузка шаблонов индексов и дашбордов
+setup.dashboards.enabled: true #автоматически загружать стандартные дашборды Kibana для Filebeat
+setup.template.settings:
+  index.number_of_shards: 1 #количество первичных шардов для индексов (1 - кластер одноузловой)
+
+# Путь, где искать конфигурации модулей Filebeat
+filebeat.config.modules:
+  path: ${path.config}/modules.d/*.yml

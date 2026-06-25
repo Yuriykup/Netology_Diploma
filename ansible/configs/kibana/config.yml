@@ -1,0 +1,6 @@
+#Конфигурация Kibana
+server.port: 5601 #Порт для доступа к Kibana
+server.host: "0.0.0.0" #Доступность со всех интерфейсов
+server.name: "kibana-server" #Идентификатор сервера
+elasticsearch.hosts: ["http://elasticsearch:9200"] #Адрес Elasticsearch
+i18n.locale: "ru-RU" #Русский язык интерфейса
