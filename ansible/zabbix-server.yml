@@ -1,78 +1,151 @@
 ---
 - name: install zabbix-server
-  hosts: zabbix-server
+  hosts: zabbix_servers
   become: true
   vars_files:
-    - "./vars/main.yml"
-  
+    - vars/main.yml
+
   tasks:
+    # Установка postgresql, apache2
+    - name: Install PostgreSQL and Apache
+      apt:
+        name:
+          - postgresql
+          - apache2
+        state: present
+        update_cache: yes
 
-# Установка postgresql, apache2
-  - name: install postgresql, apache2
-    apt:
-      name:
-       - postgresql #реляционная база данных PostgreSQL
-       - apache2 #веб-сервер Apache HTTP Server
-      state: present
-      update_cache: yes
+    # Скачиваем .deb пакет с официального репозитория Zabbix
+    - name: Download Zabbix repository .deb package
+      get_url:
+        url: https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu22.04_all.deb
+        dest: /tmp/zabbix-release_latest_7.0+ubuntu22.04_all.deb
+        mode: '0644'
 
-# Скачиваем .deb пакет с официального репозитория Zabbix 
-  - name: Download Zabbix repository .deb package
-    get_url:
-      url: https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu22.04_all.deb
-      dest: /tmp/zabbix-release_latest_7.0+ubuntu22.04_all.deb
-      mode: '0644'
+    # Установка Zabbix репозитория
+    - name: Install Zabbix repository
+      apt:
+        deb: /tmp/zabbix-release_latest_7.0+ubuntu22.04_all.deb
+        update_cache: yes
 
-# Установка Zabbix-server с помощью apt
-  - name: Install Zabbix repository
-    remote_user: kupriyanov 
-    apt:
-      deb: /tmp/zabbix-release_latest_7.0+ubuntu22.04_all.deb
-      update_cache: yes
+    # Установка компонентов Zabbix
+    - name: Install Zabbix server, frontend, agent
+      apt:
+        name:
+          - zabbix-server-pgsql
+          - zabbix-frontend-php
+          - php8.1-pgsql
+          - zabbix-apache-conf
+          - zabbix-sql-scripts
+          - zabbix-agent
+        state: present
+        update_cache: yes
 
-# Установка дополнительных пакетов
-  - name: Install components zabbix-server, frontend, zabbix-agent
-    apt:
-      name:
-        - zabbix-server-pgsql #ядро системы мониторинга — сам сервер Zabbix с поддержкой PostgreSQL
-        - zabbix-frontend-php #веб-интерфейс Zabbix
-        - php8.1-pgsql #драйвер PostgreSQL для PHP 8.1
-        - zabbix-apache-conf #конфигурационный файл для Apache
-        - zabbix-sql-scripts #SQL-скрипты для создания структуры базы данных
-        - zabbix-agent #агент мониторинга
-      state: present
-      update_cache: yes
+    # Убеждаемся, что PostgreSQL запущен
+    - name: Ensure PostgreSQL is running
+      service:
+        name: postgresql
+        state: started
+        enabled: yes
 
-# Создание пользователя zabbix с паролем для postgresql
-  - name: Create db_user for postgresql_db with password
-    ansible.builtin.shell: |
-      su - postgres -c 'psql --command "CREATE USER {{ zabbix_db_user }} WITH PASSWORD '\'{{ zabbix_db_password }}\'';"'
+    # Создание пользователя БД
+    - name: Create PostgreSQL user for Zabbix
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "CREATE USER {{ zabbix_db_user }} WITH PASSWORD '{{ zabbix_db_password }}';"
+      register: create_user_result
+      changed_when: '"already exists" not in create_user_result.stderr'
+      failed_when:
+        - create_user_result.rc != 0
+        - '"already exists" not in create_user_result.stderr'
 
-# Создание БД zabbix для пользователя zabbix
-  - name: Create postgresql_db for db_user
-    ansible.builtin.shell: |
-      su - postgres -c 'psql --command "CREATE DATABASE {{ zabbix_db_name }} OWNER {{ zabbix_db_user }};"'
+    # Создание базы данных
+    - name: Create PostgreSQL database for Zabbix
+      ansible.builtin.shell: |
+        sudo -u postgres psql -c "CREATE DATABASE {{ zabbix_db_name }} OWNER {{ zabbix_db_user }};"
+      register: create_db_result
+      changed_when: '"already exists" not in create_db_result.stderr'
+      failed_when:
+        - create_db_result.rc != 0
+        - '"already exists" not in create_db_result.stderr'
 
-# Импорт первоначальной схемы и данных 
-  - name: Import schema
-    ansible.builtin.shell: |
-      zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | sudo -u {{ zabbix_db_user }} psql {{ zabbix_db_name }}
+    # Проверка, импортирована ли схема
+    - name: Check if schema already imported
+      ansible.builtin.shell: |
+        sudo -u postgres psql -t -A -c "SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public';" {{ zabbix_db_name }}
+      register: table_count
+      changed_when: false
 
-# Определение пароля для БД в файле zabbix_server.conf
-  - name: Set DBPassword in Zabbix config
-    ansible.builtin.lineinfile:
-      path: /etc/zabbix/zabbix_server.conf
-      regexp: '# DBPassword='
-      line: 'DBPassword={{ zabbix_db_password }}'
+    # Импорт схемы
+    - name: Import Zabbix schema to database
+      ansible.builtin.shell: |
+        zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | sudo -u postgres psql {{ zabbix_db_name }}
+      when: table_count.stdout | int == 0
 
-# Перезагрузка и запуск служб
-  - name: Enable and restart services
-    ansible.builtin.service:
-      name: "{{ item }}"
-      enabled: true
-      state: restarted
-    loop:
-      - zabbix-server
-      - zabbix-agent
-      - apache2
-      - postgresql
+    # Настройка пароля БД в конфиге Zabbix
+    - name: Set DBPassword in Zabbix config
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_server.conf
+        regexp: '^#?DBPassword='
+        line: 'DBPassword={{ zabbix_db_password }}'
+
+    # Настройка DBHost
+    - name: Set DBHost in Zabbix config
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_server.conf
+        regexp: '^#?DBHost='
+        line: 'DBHost=localhost'
+
+    # Настройка DBName
+    - name: Set DBName in Zabbix config
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_server.conf
+        regexp: '^#?DBName='
+        line: 'DBName={{ zabbix_db_name }}'
+
+    # Настройка DBUser
+    - name: Set DBUser in Zabbix config
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_server.conf
+        regexp: '^#?DBUser='
+        line: 'DBUser={{ zabbix_db_user }}'
+
+    # ============================================
+    # НАСТРОЙКА ВРЕМЕННОЙ ЗОНЫ (важно для Zabbix)
+    # ============================================
+    - name: Set PHP timezone for Apache
+      ansible.builtin.lineinfile:
+        path: /etc/php/8.1/apache2/php.ini
+        regexp: '^;?date.timezone ='
+        line: 'date.timezone = Europe/Moscow'
+
+    - name: Set PHP timezone for CLI
+      ansible.builtin.lineinfile:
+        path: /etc/php/8.1/cli/php.ini
+        regexp: '^;?date.timezone ='
+        line: 'date.timezone = Europe/Moscow'
+
+    - name: Set timezone in Zabbix Apache config
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/apache.conf
+        regexp: '^#?php_value date.timezone'
+        line: 'php_value date.timezone Europe/Moscow'
+      notify: restart apache2
+
+    # ============================================
+    # ЗАПУСК СЛУЖБ
+    # ============================================
+    - name: Enable and start services
+      ansible.builtin.service:
+        name: "{{ item }}"
+        enabled: true
+        state: started
+      loop:
+        - zabbix-server
+        - zabbix-agent
+        - apache2
+
+  handlers:
+    - name: restart apache2
+      service:
+        name: apache2
+        state: restarted

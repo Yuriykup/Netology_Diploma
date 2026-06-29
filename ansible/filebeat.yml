@@ -1,71 +1,134 @@
 ---
 - name: Install Filebeat from Yandex Mirror
-  hosts: hosts
+  hosts: web_servers
   become: true
   vars_files:
-    - "./vars/main.yml"
-  tasks:
+    - vars/main.yml
 
-# Устанавливаем зависимости
+  tasks:
+    # Установка зависимостей
     - name: Install dependencies for HTTPS repositories
       apt:
         name:
-          - apt-transport-https #позволяет apt работать с репозиториями по HTTPS
-          - ca-certificates #содержит комплект корневых SSL-сертификатов
-          - gnupg #инструмент для работы с GPG-ключами
+          - apt-transport-https
+          - ca-certificates
+          - gnupg
         state: present
         update_cache: yes
 
-# Добавление репозитория из зеркала Yandex mirror
-    - name: Добавление Yandex mirror в репозиторий
+    # Добавление репозитория Elasticsearch из зеркала Yandex
+    - name: Add Yandex mirror repository for Filebeat
       apt_repository:
         repo: "deb [trusted=yes] {{ yandex_mirror_url }}"
         state: present
         filename: elasticsearch
+        update_cache: yes
 
-# Установка filebeat из добавленного репозитория
-    - name: Установка Filebeat
+    # Установка Filebeat
+    - name: Install Filebeat
       apt:
         name: filebeat
         state: present
         update_cache: yes
 
-# Копируем настройки Filebeat
+    # Создание директории для конфигов Filebeat
+    - name: Create Filebeat config directory
+      file:
+        path: /etc/filebeat
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    # Копирование основного конфигурационного файла Filebeat
     - name: Copy Filebeat configuration file
       copy:
-        src: ./configs/filebeat/filebeat-config.yml
+        src: configs/filebeat/filebeat-config.yml
         dest: /etc/filebeat/filebeat.yml
+        owner: root
+        group: root
+        mode: '0644'
+        backup: yes
+      notify: restart filebeat
 
-# Активация nginx
-    - name: Включить модуль nginx в Filebeat
+    # Создание директории для модулей
+    - name: Create Filebeat modules directory
+      file:
+        path: /etc/filebeat/modules.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    # Включение модуля nginx в Filebeat
+    - name: Enable nginx module in Filebeat
       command: filebeat modules enable nginx
       register: filebeat_module_status
       changed_when: "'Enabled nginx' in filebeat_module_status.stdout"
-#      notify: Restart filebeat
+      notify: restart filebeat
 
-# Копирование настроек nginx на отправку логов
-    - name: Copy Nginx configuration file
+    # Копирование конфигурации модуля nginx
+    - name: Copy nginx module configuration
       copy:
-        src: ./configs/filebeat/nginx-config.yml
+        src: configs/filebeat/nginx-config.yml
         dest: /etc/filebeat/modules.d/nginx.yml
+        owner: root
+        group: root
+        mode: '0644'
+        backup: yes
+      notify: restart filebeat
 
-# Рестарт сервиса и автозапуск
-    - name: Enable and restart services
+    # Настройка путей к логам nginx в модуле
+    - name: Configure nginx log paths in Filebeat module
+      ansible.builtin.lineinfile:
+        path: /etc/filebeat/modules.d/nginx.yml
+        regexp: "{{ item.regexp }}"
+        line: "{{ item.line }}"
+        backup: yes
+      loop:
+        - { regexp: '^  - /var/log/nginx/access.log', line: '    - /var/log/nginx/access.log' }
+        - { regexp: '^  - /var/log/nginx/error.log', line: '    - /var/log/nginx/error.log' }
+      notify: restart filebeat
+
+    # Настройка вывода в Elasticsearch
+    - name: Configure Elasticsearch output in Filebeat
+      ansible.builtin.lineinfile:
+        path: /etc/filebeat/filebeat.yml
+        regexp: '^#?  hosts: \["localhost:9200"\]'
+        line: '  hosts: ["10.10.1.7:9200"]'
+        backup: yes
+      notify: restart filebeat
+
+    # Настройка Kibana для Filebeat
+    - name: Configure Kibana host in Filebeat
+      ansible.builtin.lineinfile:
+        path: /etc/filebeat/filebeat.yml
+        regexp: '^#?  host: "localhost:5601"'
+        line: '  host: "10.10.1.7:5601"'
+        backup: yes
+      notify: restart filebeat
+
+    # Перезагрузка systemd
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    # Запуск и включение Filebeat
+    - name: Enable and start Filebeat
       ansible.builtin.service:
-        name: "{{ item }}"
+        name: filebeat
         state: started
         enabled: yes
-      loop:
-        - filebeat
-        - nginx
-      register: service_status
-      
-# Перезапуск службы, если она неактивна
-    - name: Restart service if inactive
+
+    # Перезапуск Filebeat для применения конфигурации
+    - name: Restart Filebeat to apply configuration
       ansible.builtin.service:
-        name: "{{ item }}"
+        name: filebeat
         state: restarted
-      loop:
-        - filebeat
-        - nginx
-      when: service_status.changed
+
+  handlers:
+    - name: restart filebeat
+      systemd:
+        name: filebeat
+        state: restarted
+        daemon_reload: yes

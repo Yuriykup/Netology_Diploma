@@ -1,46 +1,129 @@
 ---
 - name: Install Elasticsearch from Yandex Mirror
-  hosts: elasticsearch
+  hosts: elasticsearch_servers
   become: true
   vars_files:
-    - "./vars/main.yml"
-  tasks:
+    - vars/main.yml
 
-# Установка пакетов
-    - name: install packages
+  tasks:
+    # Установка зависимостей
+    - name: Install required packages
       apt:
         name:
-          - apt-transport-https #работа с репозиториями по протоколу HTTPS
-          - gnupg2 #инструмент для работы с GPG-ключами
-          - curl #утилита для передачи данных по сети (HTTP, HTTPS, FTP и др.)
-          - default-jre-headless #Java Runtime Environment (JRE) без графического интерфейса (headless)
-          - libwww-perl #библиотека Perl для работы с HTTP/HTTPS (набор модулей LWP)
+          - apt-transport-https
+          - gnupg2
+          - curl
+          - default-jre-headless
+          - libwww-perl
         state: present
         update_cache: yes
 
-# Добавление репозитория из зеркала Yandex mirror
-    - name: Добавление Yandex mirror в репозиторий
+    # Добавление репозитория Elasticsearch из зеркала Yandex
+    - name: Add Yandex mirror repository for Elasticsearch
       apt_repository:
         repo: "deb [trusted=yes] {{ yandex_mirror_url }}"
         state: present
         filename: elasticsearch
+        update_cache: yes
 
-# Установка elasticsearch из добавленного репозитория
-    - name: Установка Elasticsearch
+    # Установка Elasticsearch
+    - name: Install Elasticsearch
       apt:
         name: elasticsearch
         state: present
         update_cache: yes
 
+    # Создание директории для конфигов (если отсутствует)
+    - name: Create Elasticsearch config directory
+      file:
+        path: /etc/elasticsearch
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    # Копирование конфигурационного файла Elasticsearch
     - name: Copy Elasticsearch config file
       copy:
-        src: ./configs/elasticsearch/config.yml
+        src: configs/elasticsearch/config.yml
         dest: /etc/elasticsearch/elasticsearch.yml
+        owner: root
+        group: elasticsearch
+        mode: '0640'
+        backup: yes
+      notify: restart elasticsearch
 
-# Включение и запуск elasticsearch
-    - name: Включение и запуск Elasticsearch
+    # Настройка прав на директорию /etc/elasticsearch
+    - name: Set correct permissions for Elasticsearch config directory
+      file:
+        path: /etc/elasticsearch
+        state: directory
+        owner: root
+        group: elasticsearch
+        mode: '0750'
+
+    # Настройка прав на файлы конфигурации
+    - name: Set correct permissions for Elasticsearch config files
+      file:
+        path: /etc/elasticsearch/elasticsearch.yml
+        owner: root
+        group: elasticsearch
+        mode: '0640'
+
+    # Настройка JVM options (выделение памяти)
+    - name: Configure Elasticsearch JVM heap size
+      ansible.builtin.lineinfile:
+        path: /etc/elasticsearch/jvm.options
+        regexp: '^-Xms'
+        line: '-Xms2g'
+        backup: yes
+      notify: restart elasticsearch
+
+    - name: Configure Elasticsearch JVM max heap size
+      ansible.builtin.lineinfile:
+        path: /etc/elasticsearch/jvm.options
+        regexp: '^-Xmx'
+        line: '-Xmx2g'
+        backup: yes
+      notify: restart elasticsearch
+
+    # Настройка системных лимитов для Elasticsearch
+    - name: Set system limits for Elasticsearch
+      ansible.builtin.lineinfile:
+        path: /etc/security/limits.conf
+        line: "{{ item }}"
+        create: yes
+      loop:
+        - "elasticsearch soft nofile 65536"
+        - "elasticsearch hard nofile 65536"
+        - "elasticsearch soft nproc 4096"
+        - "elasticsearch hard nproc 4096"
+      notify: restart elasticsearch
+
+    # Настройка vm.max_map_count для Elasticsearch
+    - name: Set vm.max_map_count for Elasticsearch
+      ansible.builtin.sysctl:
+        name: vm.max_map_count
+        value: '262144'
+        state: present
+        reload: yes
+
+    # Перезагрузка systemd
+    - name: Reload systemd daemon
+      systemd:
+        daemon_reload: yes
+
+    # Включение и запуск Elasticsearch
+    - name: Enable and start Elasticsearch
       systemd:
         name: elasticsearch
         enabled: yes
         state: started
+        daemon_reload: yes
+
+  handlers:
+    - name: restart elasticsearch
+      systemd:
+        name: elasticsearch
+        state: restarted
         daemon_reload: yes

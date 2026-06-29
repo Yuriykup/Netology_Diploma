@@ -1,28 +1,31 @@
 ---
 - name: install nginx
   hosts: webb
-  become: yes
+  become: true
   vars_files:
-    - "./vars/main.yml"
+    - vars/main.yml
 
   tasks:
-  - name: install nginx
-    apt:
-      name:
-       - nginx #веб-сервер
-       - net-tools #набор классических сетевых утилит (ifconfig, netstat, route, arp и др.)
-      state: present
-      update_cache: yes
+    - name: Install nginx and net-tools
+      apt:
+        name:
+          - nginx
+          - net-tools
+        state: present
+        update_cache: yes
 
-  - name: copy index.nginx-debian.html web-b
-    copy:
-      src: ./webb_index/index.nginx-debian.html
-      dest: /var/www/html/index.nginx-debian.html
-      remote_src: no
-      force: yes
-      backup: yes
+    - name: Copy index.nginx-debian.html for webb
+      copy:
+        src: webb_index/index.nginx.html
+        dest: /var/www/html/index.html
+        owner: root
+        group: root
+        mode: '0644'
+        backup: yes
+      notify: reload nginx
 
-  - name: reload nginx webb
-    service:
-      name: nginx
-      state: reloaded
+  handlers:
+    - name: reload nginx
+      service:
+        name: nginx
+        state: reloaded

@@ -1,54 +1,58 @@
 ---
 - name: install zabbix-agent
-  hosts: hosts
+  hosts: web_servers
   become: true
   vars_files:
-    - "./vars/main.yml"
-  
+    - vars/main.yml
+
   tasks:
+    # Скачиваем .deb пакет с официального репозитория Zabbix
+    - name: Download Zabbix repository .deb package
+      get_url:
+        url: https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu22.04_all.deb
+        dest: /tmp/zabbix-release_latest_7.0+ubuntu22.04_all.deb
+        mode: '0644'
 
-# Скачиваем .deb пакет с официального репозитория Zabbix 
-  - name: Download Zabbix repository .deb package
-    get_url:
-      url: https://repo.zabbix.com/zabbix/7.0/ubuntu/pool/main/z/zabbix-release/zabbix-release_latest_7.0+ubuntu22.04_all.deb
-      dest: /tmp/zabbix-release_latest_7.0+ubuntu22.04_all.deb
-      mode: '0644'
+    # Установка Zabbix репозитория
+    - name: Install Zabbix repository
+      apt:
+        deb: /tmp/zabbix-release_latest_7.0+ubuntu22.04_all.deb
+        update_cache: yes
 
-# Установка Zabbix-agent с помощью apt
-  - name: Install Zabbix repository
-    remote_user: kupriyanov
-    apt:
-      deb: /tmp/zabbix-release_latest_7.0+ubuntu22.04_all.deb
-      update_cache: yes
+    # Установка zabbix-agent
+    - name: Install zabbix-agent
+      apt:
+        name: zabbix-agent
+        state: present
+        update_cache: yes
 
-# Правила обновения пакетов
-  - name: Update and upgrade apt packages
-    apt:
-      upgrade: yes
-      update_cache: yes
-      state: latest
+    # Настройка адреса Zabbix-сервера (используем внутренний IP)
+    - name: Set Zabbix Server address in config
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^Server='
+        line: 'Server=10.10.1.7'
+        backup: yes
 
-# Установка zabbix-agent
-  - name: Install zabbix-agent
-    apt:
-      name: zabbix-agent
-      state: present
-      update_cache: yes
+    # Настройка активного Zabbix-сервера (для активной проверки)
+    - name: Set Zabbix Server active address in config
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^ServerActive='
+        line: 'ServerActive=10.10.1.7'
+        backup: yes
 
-# Определение адреса zabbix-сервера для zabbix-agent 
-  - name: Update Zabbix Server in config
-    lineinfile:
-      path: /etc/zabbix/zabbix_agentd.conf
-      regexp: 'Server='
-      line: 'Server=zabbix-server'
-      state: present
+    # Настройка имени хоста (чтобы было понятно, какая ВМ)
+    - name: Set Hostname in Zabbix agent config
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_agentd.conf
+        regexp: '^Hostname='
+        line: 'Hostname={{ inventory_hostname }}'
+        backup: yes
 
-# Перезагрузка и запуск службы
-  - name: Enable and restart services
-    ansible.builtin.service:
-      name: "{{ item }}"
-      enabled: true
-      state: restarted
-    loop:
-      - zabbix-agent
-      - nginx
+    # Включение и перезапуск службы zabbix-agent
+    - name: Enable and restart zabbix-agent
+      ansible.builtin.service:
+        name: zabbix-agent
+        enabled: true
+        state: restarted
