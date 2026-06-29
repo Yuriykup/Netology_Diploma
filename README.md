@@ -41,40 +41,8 @@
 ---
 
 ## 🏗️ Архитектура
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ YANDEX CLOUD │
-├─────────────────────────────────────────────────────────────────────────────┤
-│ │
-│ ┌─────────────────────────────────────────────────────────────────────┐ │
-│ │ Application Load Balancer │ │
-│ │ http://158.160.187.10:80 │ │
-│ └──────────────────────────────┬──────────────────────────────────────┘ │
-│ │ │
-│ ┌──────────────┼──────────────┐ │
-│ │ │ │ │
-│ ▼ ▼ ▼ │
-│ ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐ │
-│ │ WebA │ │ WebB │ │ Бастион │ │
-│ │ 10.10.1.11 │ │ 10.10.2.16 │ │ 111.88.242.130 │ │
-│ │ ┌──────────────┐ │ │ ┌──────────────┐ │ │ (SSH Proxy) │ │
-│ │ │ Nginx │ │ │ │ Nginx │ │ └────────────────────┘ │
-│ │ │ Filebeat │ │ │ │ Filebeat │ │ │
-│ │ │ Zabbix Agent │ │ │ │ Zabbix Agent │ │ │
-│ │ └──────────────┘ │ │ └──────────────┘ │ │
-│ └────────────────────┘ └────────────────────┘ │
-│ │ │ │ │
-│ └──────────────┼──────────────┘ │
-│ │ │
-│ ┌──────────────┼──────────────┐ │
-│ │ │ │ │
-│ ▼ ▼ ▼ │
-│ ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐ │
-│ │ Elasticsearch │ │ Kibana │ │ Zabbix Server │ │
-│ │ 10.10.1.34 │ │ 111.88.241.212:5601│ │ 111.88.247.195 │ │
-│ │ (Хранилище логов)│ │ (Визуализация) │ │ (Мониторинг) │ │
-│ └────────────────────┘ └────────────────────┘ └────────────────────┘ │
-│ │
-└─────────────────────────────────────────────────────────────────────────────┘
+
+![Архитектура](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-arch.jpg)
 
 
 ### Схема потоков данных
@@ -114,9 +82,9 @@
 
 ---
 
-## 📁 Структура проекта
-.
-├── terraform/ # Инфраструктура как код
+### 📁 Структура проекта
+```
+├── terraform/ # Инфраструктура как код 
 │ ├── main.tf # ВМ, диски, вычислительные ресурсы
 │ ├── alb.tf # Application Load Balancer
 │ ├── network.tf # VPC, подсети, маршрутизация
@@ -151,9 +119,9 @@
 │ ├── nginx_weba.yml
 │ └── nginx_webb.yml
 │
-├── screenshots/ # Скриншоты для документации
+├── img/ # Скриншоты для документации
 └── README.md # Документация проекта
-
+```
 
 ---
 
@@ -187,54 +155,19 @@
 
 ---
 
-## 🚀 Руководство по развертыванию
+### 🚀 Проверка работоспособности состовляющих проекта
 
-### Предварительные требования
+### Terraform
 
-# Установка необходимых инструментов
-# Terraform
-wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-sudo apt update && sudo apt install terraform
 
-# Ansible
-sudo apt install ansible
 
-# Yandex Cloud CLI
-curl https://storage.yandexcloud.net/yandexcloud-yc/install.sh | bash
+### Ansible
 
-1. Клонирование репозитория
-bash
-git clone https://github.com/yourusername/diploma-project.git
-cd diploma-project
-
-2. Настройка Yandex Cloud
-bash
-yc config set cloud-id <ваш-cloud-id>
-yc config set folder-id <ваш-folder-id>
-yc config set token <ваш-oauth-token>
-3. Развертывание инфраструктуры
-bash
-cd terraform
-
-# Инициализация Terraform
-terraform init
-
-# Просмотр планируемых изменений
-terraform plan
+### Yandex Cloud CLI
 
 # Развертывание инфраструктуры
-terraform apply
-Ожидаемый вывод (краткий):
 
-text
-Apply complete! Resources: 30+ added, 0 changed, 0 destroyed.
-4. Применение конфигураций
-bash
-cd ../ansible
 
-# Проверка доступности всех хостов
-ansible all -i hosts.ini -m ping -f 1
 
 # Развертывание сервисов в правильном порядке
 ansible-playbook zabbix-server.yml      # Бэкенд мониторинга
@@ -244,13 +177,5 @@ ansible-playbook nginx_weba.yml          # Веб-сервер A
 ansible-playbook nginx_webb.yml          # Веб-сервер B
 ansible-playbook filebeat.yml            # Сборщик логов
 ansible-playbook zabbix-agent.yml        # Агенты мониторинга
-
-5. Восстановление после сбоев
-Если какой-либо плейбук завершился с ошибкой:
-
-bash
-# Повторный запуск (плейбуки идемпотентны)
-ansible-playbook <имя_плейбука>.yml
-
 
 
