@@ -100,16 +100,16 @@
 │ │ └── main.yml # Переменные для плейбуков
 │ ├── configs/ # Конфигурационные файлы сервисов
 │ │ ├── elasticsearch/
-│ │ │ └── config.yml
+│ │ │ └── config.yml  # 0Конфигурационные файлы для Elasticsearch
 │ │ ├── kibana/
-│ │ │ └── config.yml
+│ │ │ └── config.yml # Конфигурационные файлы для Kibana
 │ │ └── filebeat/
-│ │ ├── filebeat.yml
+│ │ ├── filebeat.yml # Конфигурационные файлы для Filebeat
 │ │ └── nginx.yml
 │ ├── weba_index/ # Приветственная страница WebA
-│ │ └── index.nginx-debian.html
+│ │ └── index.nginx.html
 │ ├── webb_index/ # Приветственная страница WebB
-│ │ └── index.nginx-debian.html
+│ │ └── index.nginx.html
 │ └── playbooks/
 │ ├── zabbix-server.yml
 │ ├── zabbix-agent.yml
@@ -119,7 +119,7 @@
 │ ├── nginx_weba.yml
 │ └── nginx_webb.yml
 │
-├── img/ # Скриншоты для документации
+├── img/ # Скриншоты для проекта
 └── README.md # Документация проекта
 ```
 
@@ -155,27 +155,34 @@
 
 ---
 
-### 🚀 Проверка работоспособности состовляющих проекта
+## 🚀 Запуск состовляющих проекта
 
 ### Terraform
 
-
+![Terraform-version](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-terraform.png)
 
 ### Ansible
 
+![Ansible-version](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-ansible.png)
+
 ### Yandex Cloud CLI
 
-# Развертывание инфраструктуры
+![YaCloud-dashboard](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-yacloud.png)
 
+### Развертывание инфраструктуры
 
+![Terraform-apply](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-terraform-up.png)
 
-# Развертывание сервисов в правильном порядке
-ansible-playbook zabbix-server.yml      # Бэкенд мониторинга
-ansible-playbook elasticsearch.yml       # Хранилище логов
-ansible-playbook kibana.yml              # Визуализация логов
-ansible-playbook nginx_weba.yml          # Веб-сервер A
-ansible-playbook nginx_webb.yml          # Веб-сервер B
-ansible-playbook filebeat.yml            # Сборщик логов
-ansible-playbook zabbix-agent.yml        # Агенты мониторинга
+### Развертывание сервисов в правильном порядке
+```
+ansible-playbook zabbix-server.yml  # Сервер мониторинга
+ansible-playbook elasticsearch.yml  # Хранилище логов
+ansible-playbook kibana.yml         # Визуализация логов
+ansible-playbook nginx_weba.yml     # Веб-сервер A
+ansible-playbook nginx_webb.yml     # Веб-сервер B
+ansible-playbook filebeat.yml       # Сборщик логов
+ansible-playbook zabbix-agent.yml   # Агенты мониторинга
+```
+![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-ansible-up.png)
 
 
