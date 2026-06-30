@@ -150,7 +150,7 @@
 
 ---
 
-## 🚀 Запуск состовляющих проекта
+## 🚀 Запуск составляющих проекта
 
 ### Terraform
 
@@ -203,7 +203,7 @@ ansible-playbook zabbix-agent.yml   # Агенты мониторинга
 
 ![Zabbix-agent-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/zabbix-agent-up.png)
 
-## 📊 Скриншоты рабочей инфраструктуры в Яндекс.Облаке
+## 📊 Скриншоты рабочей инфраструктуры
 
 ### Yandex Cloud CLI ✅
 
