@@ -1,10 +1,10 @@
 #Указваем где Kibana Server
 setup.kibana:
-  host: "kibana-server:5601"
+  host: "46.21.245.86:5601"
 
 # Путь куда Filebeat будет отправлять логи
 output.elasticsearch:
-  hosts: ["elasticsearch-server:9200"]
+  hosts: ["10.10.1.20:9200"]
 
 # Автоматическая загрузка шаблонов индексов и дашбордов
 setup.dashboards.enabled: true #автоматически загружать стандартные дашборды Kibana для Filebeat

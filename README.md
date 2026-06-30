@@ -15,7 +15,8 @@
 - [Технологический стек](#технологический-стек)
 - [Структура проекта](#структура-проекта)
 - [Компоненты инфраструктуры](#компоненты-инфраструктуры)
-
+- [Запуск состовляющих проекта](#запуск-состовляющих-проекта)
+- [Скриншоты рабочей инфраструктуры в Яндекс.Облаке](#скриншоты-рабочей-инфраструктуры-в-Яндекс.Облаке)
 ---
 
 ## 🎯 Обзор проекта
@@ -163,7 +164,7 @@
 
 ![Terraform-apply](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-terraform-up.png)
 
-#### Проверка доступности
+### Проверка доступности
 ![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/ansible-ping-pong.png)
 
 ### Развертывание сервисов в правильном порядке
@@ -198,35 +199,34 @@ ansible-playbook zabbix-agent.yml   # Агенты мониторинга
 
 ![Filebeat-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/filebeat-up.png)
 
-
 `ansible-playbook zabbix-agent.yml`
 
 ![Zabbix-agent-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/zabbix-agent-up.png)
 
-## Скриншоты рабочей инфраструктуры в Яндекс.Облаке
+## 📊 Скриншоты рабочей инфраструктуры в Яндекс.Облаке
 
-### Yandex Cloud CLI
+### Yandex Cloud CLI ✅
 
 ![YaCloud-dashboard](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-yacloud.png)
 
-### Zabbix-Server Dashbord
+### Zabbix-Server Dashbord ✅
 
 ![Zabbix-server-dashboard](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/zabbix-dashboard.png)
 
-### Web Server 1 и Web Server 2 Dashboard
+### Web Server 1 и Web Server 2 Dashboard ✅
 
 ![Web-servers-dashboard](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/web-servers-dashboard.png)
 
-### Elasticsearch. Логирование
+### Elasticsearch & Kibana. Логирование ✅
 
-![Elasticsearch-dashboard](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/web-servers-dashboard.png)
+![Elasticsearch-kibana-dashboard](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/kibana-logs.png)
 
-### Snapshot
+### Snapshot ✅
 
+![Snapshots](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/snapshoots.png)
 
 ## Заключение.
-📈 Заключение
-В ходе выполнения дипломного проекта была полностью автоматизирована процедура развертывания отказоустойчивой веб-инфраструктуры в облаке Yandex Cloud с использованием Terraform и Ansible. Инфраструктура включает:
+📈 В ходе выполнения дипломного проекта была полностью автоматизирована процедура развертывания отказоустойчивой веб-инфраструктуры в облаке Yandex Cloud с использованием Terraform и Ansible. Инфраструктура включает:
 
 - Отказоустойчивость: два веб-сервера в разных зонах доступности
 - Балансировку нагрузки: Application Load Balancer распределяет трафик между WebA и WebB

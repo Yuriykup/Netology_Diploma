@@ -11,5 +11,5 @@ es_version: 7
 yandex_mirror_url: https://mirror.yandex.ru/mirrors/elastic/{{ es_version }}/ stable main
 
 # Переменные для filebeat
-elasticsearch_ip: 10.10.1.20
-kibana_ip: 46.21.245.86
+elasticsearch_server: 10.10.1.20
+kibana_server: 46.21.245.86
