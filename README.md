@@ -159,10 +159,6 @@
 
 ![Ansible-version](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-ansible.png)
 
-### Yandex Cloud CLI
-
-![YaCloud-dashboard](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-yacloud.png)
-
 ### Развертывание инфраструктуры
 
 ![Terraform-apply](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-terraform-up.png)
@@ -184,39 +180,46 @@ ansible-playbook zabbix-agent.yml   # Агенты мониторинга
 
 `ansible-playbook zabbix-server.yml`
 
-![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/zabbix-server-up.png)
+![Zabbix-server-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/zabbix-server-up.png)
 
 `ansible-playbook elasticsearch.yml`
 
-![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/elasticsearch-up.png)
+![Elasticsearch-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/elasticsearch-up.png)
 
 `ansible-playbook kibana.yml`
 
-![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/kibana-up.png)
+![Kibana-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/kibana-up.png)
 
 `ansible-playbook nginx_weba.yml` `ansible-playbook nginx_webb.yml`
 
-![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/web-servers-up.png)
+![Web-servers-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/web-servers-up.png)
 
 `ansible-playbook filebeat.yml`
 
-![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/filebeat-up.png)
+![Filebeat-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/filebeat-up.png)
 
 
 `ansible-playbook zabbix-agent.yml`
 
-![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/zabbix-agent-up.png)
+![Zabbix-agent-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/zabbix-agent-up.png)
 
 ## Скриншоты рабочей инфраструктуры в Яндекс.Облаке
 
-### Zabbix Server Dashbord
+### Yandex Cloud CLI
 
+![YaCloud-dashboard](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-yacloud.png)
 
-### Web Server 1 и Web Server 2
+### Zabbix-Server Dashbord
 
+![Zabbix-server-dashboard](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/zabbix-dashboard.png)
+
+### Web Server 1 и Web Server 2 Dashboard
+
+![Web-servers-dashboard](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/web-servers-dashboard.png)
 
 ### Elasticsearch. Логирование
 
+![Elasticsearch-dashboard](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/web-servers-dashboard.png)
 
 ### Snapshot
 
