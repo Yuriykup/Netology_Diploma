@@ -14,7 +14,7 @@
         state: present
         update_cache: yes
 
-    - name: Copy index.nginx-debian.html for weba
+    - name: Copy index.nginx.html for weba
       copy:
         src: weba_index/index.nginx.html 
         dest: /var/www/html/index.html

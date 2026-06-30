@@ -122,14 +122,14 @@
 ## 🔧 Компоненты инфраструктуры
 
 ### Виртуальные машины
-| Имя хоста | Внутренний IP | Публичный IP | Зона | Назначение |
-|-----------|---------------|--------------|------|------------|
-| bastion | 10.10.1.x | 111.88.242.130 | a | SSH-шлюз |
-| weba | 10.10.1.11 | - | a | Веб-сервер A |
-| webb | 10.10.2.16 | - | b | Веб-сервер B |
-| elasticsearch | 10.10.1.34 | - | a | Хранилище логов |
-| kibana-server | - | 111.88.241.212 | a | Визуализация логов |
-| zabbix-server | - | 111.88.247.195 | a | Мониторинг |
+| Имя ВМ | Назначение | Внутренний IP | Публичный IP | Зона |
+|--------|------------|---------------|--------------|------|
+| **bastion** | SSH-шлюз (бастион-хост) | `10.10.1.34` | **`84.252.131.175`** | ru-central1-a |
+| **weba** | Веб-сервер A (Nginx) | **`10.10.1.23`** | — | ru-central1-a |
+| **webb** | Веб-сервер B (Nginx) | **`10.10.2.23`** | — | ru-central1-b |
+| **elasticsearch** | Хранилище логов (Elasticsearch) | **`10.10.1.20`** | — | ru-central1-a |
+| **kibana-server** | Визуализация логов (Kibana) | — | **`46.21.245.86`** | ru-central1-a |
+| **zabbix-server** | Сервер мониторинга (Zabbix) | `10.10.1.5` | **`51.250.95.115`** | ru-central1-a |
 
 ### Балансировщик нагрузки
 - **Тип**: Application Load Balancer
@@ -167,7 +167,11 @@
 
 ![Terraform-apply](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-terraform-up.png)
 
+#### Проверка доступности
+![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/ansible-ping-pong.png)
+
 ### Развертывание сервисов в правильном порядке
+
 ```
 ansible-playbook zabbix-server.yml  # Сервер мониторинга
 ansible-playbook elasticsearch.yml  # Хранилище логов
@@ -177,9 +181,33 @@ ansible-playbook nginx_webb.yml     # Веб-сервер B
 ansible-playbook filebeat.yml       # Сборщик логов
 ansible-playbook zabbix-agent.yml   # Агенты мониторинга
 ```
-![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/img-ansible-up.png)
 
-## Скриншоты рабочей инфраструктуры
+`ansible-playbook zabbix-server.yml`
+
+![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/zabbix-server-up.png)
+
+`ansible-playbook elasticsearch.yml`
+
+![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/elasticsearch-up.png)
+
+`ansible-playbook kibana.yml`
+
+![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/kibana-up.png)
+
+`ansible-playbook nginx_weba.yml` `ansible-playbook nginx_webb.yml`
+
+![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/web-servers-up.png)
+
+`ansible-playbook filebeat.yml`
+
+![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/filebeat-up.png)
+
+
+`ansible-playbook zabbix-agent.yml`
+
+![Ansible-playbook-up](https://github.com/Yuriykup/Netology_Diploma/blob/main/img/zabbix-agent-up.png)
+
+## Скриншоты рабочей инфраструктуры в Яндекс.Облаке
 
 ### Zabbix Server Dashbord
 

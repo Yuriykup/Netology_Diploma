@@ -95,7 +95,7 @@
       ansible.builtin.lineinfile:
         path: /etc/filebeat/filebeat.yml
         regexp: '^#?  hosts: \["localhost:9200"\]'
-        line: '  hosts: ["10.10.1.7:9200"]'
+        line: '  hosts: ["{{ elasticsearch_ip }}:9200"]'
         backup: yes
       notify: restart filebeat
 
@@ -104,7 +104,7 @@
       ansible.builtin.lineinfile:
         path: /etc/filebeat/filebeat.yml
         regexp: '^#?  host: "localhost:5601"'
-        line: '  host: "10.10.1.7:5601"'
+        line: '  host: "{{ kibana_ip }}:5601"'
         backup: yes
       notify: restart filebeat
 

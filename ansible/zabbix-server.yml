@@ -50,8 +50,9 @@
 
     # Создание пользователя БД
     - name: Create PostgreSQL user for Zabbix
+      become_user: postgres
       ansible.builtin.shell: |
-        sudo -u postgres psql -c "CREATE USER {{ zabbix_db_user }} WITH PASSWORD '{{ zabbix_db_password }}';"
+        psql -c "CREATE USER {{ zabbix_db_user }} WITH PASSWORD '{{ zabbix_db_password }}';"
       register: create_user_result
       changed_when: '"already exists" not in create_user_result.stderr'
       failed_when:
@@ -60,8 +61,9 @@
 
     # Создание базы данных
     - name: Create PostgreSQL database for Zabbix
+      become_user: postgres
       ansible.builtin.shell: |
-        sudo -u postgres psql -c "CREATE DATABASE {{ zabbix_db_name }} OWNER {{ zabbix_db_user }};"
+        psql -c "CREATE DATABASE {{ zabbix_db_name }} OWNER {{ zabbix_db_user }};"
       register: create_db_result
       changed_when: '"already exists" not in create_db_result.stderr'
       failed_when:
@@ -70,15 +72,17 @@
 
     # Проверка, импортирована ли схема
     - name: Check if schema already imported
+      become_user: postgres
       ansible.builtin.shell: |
-        sudo -u postgres psql -t -A -c "SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public';" {{ zabbix_db_name }}
+        psql -t -A -c "SELECT COUNT(*) FROM pg_tables WHERE schemaname = 'public';" {{ zabbix_db_name }}
       register: table_count
       changed_when: false
 
     # Импорт схемы
     - name: Import Zabbix schema to database
+      become_user: postgres
       ansible.builtin.shell: |
-        zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | sudo -u postgres psql {{ zabbix_db_name }}
+        zcat /usr/share/zabbix-sql-scripts/postgresql/server.sql.gz | psql {{ zabbix_db_name }}
       when: table_count.stdout | int == 0
 
     # Настройка пароля БД в конфиге Zabbix
@@ -109,9 +113,14 @@
         regexp: '^#?DBUser='
         line: 'DBUser={{ zabbix_db_user }}'
 
-    # ============================================
-    # НАСТРОЙКА ВРЕМЕННОЙ ЗОНЫ (важно для Zabbix)
-    # ============================================
+    # Настройка PidFile
+    - name: Set PidFile in Zabbix config
+      ansible.builtin.lineinfile:
+        path: /etc/zabbix/zabbix_server.conf
+        regexp: '^#?PidFile='
+        line: 'PidFile=/tmp/zabbix_server.pid'
+
+    # Настройка временной зоны
     - name: Set PHP timezone for Apache
       ansible.builtin.lineinfile:
         path: /etc/php/8.1/apache2/php.ini
@@ -131,9 +140,40 @@
         line: 'php_value date.timezone Europe/Moscow'
       notify: restart apache2
 
-    # ============================================
-    # ЗАПУСК СЛУЖБ
-    # ============================================
+    # Создание runtime директории
+    - name: Create runtime directory for Zabbix
+      file:
+        path: /run/zabbix
+        state: directory
+        owner: zabbix
+        group: zabbix
+        mode: '0755'
+
+    # Настройка systemd
+    - name: Create systemd override directory
+      file:
+        path: /etc/systemd/system/zabbix-server.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Create systemd override for Zabbix Server
+      copy:
+        dest: /etc/systemd/system/zabbix-server.service.d/override.conf
+        content: |
+          [Service]
+          Type=forking
+          PIDFile=/tmp/zabbix_server.pid
+          ExecStart=/usr/sbin/zabbix_server -c /etc/zabbix/zabbix_server.conf
+          Restart=on-failure
+          RestartSec=10
+        owner: root
+        group: root
+        mode: '0644'
+      notify: reload systemd
+
+    # Запуск служб
     - name: Enable and start services
       ansible.builtin.service:
         name: "{{ item }}"
@@ -149,3 +189,7 @@
       service:
         name: apache2
         state: restarted
+
+    - name: reload systemd
+      systemd:
+        daemon_reload: yes

@@ -14,7 +14,7 @@
         state: present
         update_cache: yes
 
-    - name: Copy index.nginx-debian.html for webb
+    - name: Copy index.nginx.html for webb
       copy:
         src: webb_index/index.nginx.html
         dest: /var/www/html/index.html
